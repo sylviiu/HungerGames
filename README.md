@@ -1,3 +1,6 @@
+# NOTE
+
+### this fork is not going to function the same as the other public releases of this exact plugin; i'm adding my own custom changes to this for events i take part in hosting
 
 A new fork of ImSpoopy's [**HungerGames**](https://github.com/ImSpoopy/Hungergames)
 
