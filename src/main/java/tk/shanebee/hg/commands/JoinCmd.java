@@ -3,6 +3,7 @@ package tk.shanebee.hg.commands;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import tk.shanebee.hg.HG;
+import tk.shanebee.hg.Status;
 import tk.shanebee.hg.game.Game;
 import tk.shanebee.hg.util.Util;
 
@@ -25,12 +26,12 @@ public class JoinCmd extends BaseCmd {
 		} else {
 			Game g = gameManager.getGame(args[1]);
 			if (g != null && !g.getGamePlayerData().getPlayers().contains(player.getUniqueId())) {
-				if (!HG.getParty().hasParty(player)) {
+				/*if (!HG.getParty().hasParty(player)) {
 					//no party
 					g.getGamePlayerData().join(player, true);
 					return true;
 				}
-				else if ((HG.getParty().isOwner(player)) &&  (g.getGamePlayerData().getPlayers().size() + HG.getParty().partySize(player)) <= g.getGameArenaData().getMaxPlayers())
+				else */if ((HG.getParty().isOwner(player)) &&  (g.getGamePlayerData().getPlayers().size() + HG.getParty().partySize(player)) <= g.getGameArenaData().getMaxPlayers())
 				{
 					List<Player> party = HG.getParty().getMembers(player);
 					for (int i = 0; i < party.size(); i++) {
@@ -43,9 +44,17 @@ public class JoinCmd extends BaseCmd {
 					}
 
 				} else if (!HG.getParty().isOwner(player)) {
-					player.sendMessage("You are in a party but not the leader, unable to join game");
+					Status status = g.getGameArenaData().getStatus();
+
+					if(status == Status.WAITING || status == Status.COUNTDOWN) {
+						// if the game is about to start, just join
+						g.getGamePlayerData().join(player, true);
+						return true;
+					} else {
+						player.sendMessage("you gotta wait for someone to start a game!");
+					}
 				} else {
-					player.sendMessage("Party is too Large to join this arena");
+					player.sendMessage("Party is too Large to join this arena (THIS SHOULDN'T HAPPEN LOL)");
 				}
 			} else {
 				Util.scm(player, lang.cmd_delete_noexist);

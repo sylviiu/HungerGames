@@ -6,18 +6,21 @@ import io.papermc.lib.PaperLib;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
+import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 import tk.shanebee.hg.commands.*;
 import tk.shanebee.hg.data.*;
 import tk.shanebee.hg.game.Game;
 import tk.shanebee.hg.listeners.*;
 import tk.shanebee.hg.managers.*;
 import tk.shanebee.hg.util.*;
+import de.maxhenkel.voicechat.api.BukkitVoicechatService;
 
 import java.util.*;
 
@@ -55,13 +58,16 @@ public class HG extends JavaPlugin {
 	private Leaderboard leaderboard;
 	private MobExecutor mmMobManager;
 
-	private static Party party = new NoParty();
+	private static Party party = new ServerParty();
 
 	//Mobs
 	private MobConfig mobConfig;
 
 	//NMS Nbt
 	private NBTApi nbtApi;
+
+	@Nullable
+	public static Voicechat vc = null;
 
 	@Override
 	public void onEnable() {
@@ -90,7 +96,7 @@ public class HG extends JavaPlugin {
 		bonusRarityMap = new HashMap<>();
 
 		config = new Config(this);
-		Bukkit.getLogger().info("Loading HungerGames by JT122406");
+		Bukkit.getLogger().info("Loading HungerGames by sylviiu");
 
 		//Bukkit.getLogger().info("Your server version is: " + getServer().getVersion() + "     Your Java Version is " + System.getProperty("java.version"));
 		String Version = System.getProperty("java.version");
@@ -113,6 +119,28 @@ public class HG extends JavaPlugin {
 			Bukkit.getLogger().info("Your Java Version is " + System.getProperty("java.version") + " This plugin is compatible with your version");
 		}
 		PaperLib.suggestPaper(this);
+
+		//VoiceChat API
+		if (Bukkit.getPluginManager().isPluginEnabled("voicechat")) {
+			Util.log("&7voicechat found, attempting to hook into API...");
+			System.out.println(BukkitVoicechatService.class);
+			BukkitVoicechatService service = Bukkit.getServicesManager().load(BukkitVoicechatService.class);
+			if (service != null) {
+				Util.log("&7voicechat hook registering with BukkitVoicechatService");
+				try {
+					vc = new Voicechat();
+					service.registerPlugin(vc);
+					Util.log("&7voicechat has been &aenabled");
+				} catch(Exception e) {
+					vc = null;
+					Util.warning("Failed starting voicechat, removing it. " + e);
+				}
+			} else {
+				Util.log("&7voicechat: BukkitVoicechatService is null, cannot register; voicechat has been &cdisabled");
+			}
+		} else {
+			Util.log("&7voicechat not found, API hooks have been &cdisabled");
+		}
 
 		//NMS Nbt
 		if (Bukkit.getPluginManager().isPluginEnabled("NBTAPI")) {
@@ -220,6 +248,12 @@ public class HG extends JavaPlugin {
         // I know this seems odd, but this method just
         // nulls everything to prevent memory leaks
         unloadPlugin(false);
+		if (vc != null) {
+			getServer().getServicesManager().unregister(vc);
+			Util.log("Successfully unregistered voice chat broadcast plugin");
+		} else {
+			Util.log("Voice chat broadcast was not loaded; skipped that.");
+		}
         Util.log("HungerGames has been disabled!");
     }
 
@@ -412,6 +446,8 @@ public class HG extends JavaPlugin {
 
 
 	public static Party getParty(){return party;}
+
+	public static Voicechat getVoicechat(){return vc;}
 
 	/**
 	 * Get an instance of the MythicMobs MobManager

@@ -10,6 +10,7 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.Nullable;
+import tk.shanebee.hg.HG;
 import tk.shanebee.hg.Status;
 import tk.shanebee.hg.data.Config;
 import tk.shanebee.hg.data.PlayerData;
@@ -432,7 +433,12 @@ public class GamePlayerData extends Data {
         }
         game.getGameBarData().addPlayer(spectator);
         game.gameArenaData.board.setBoard(spectator);
+        spectator.getInventory().clear();
         spectator.getInventory().setItem(0, plugin.getItemStackManager().getSpectatorCompass());
+
+        if(HG.vc != null) {
+            HG.vc.addSpectator(spectator);
+        }
     }
 
     /**
@@ -458,6 +464,10 @@ public class GamePlayerData extends Data {
             revealPlayer(spectator);
         exit(spectator, previousLocation);
         playerManager.removeSpectatorData(uuid);
+
+        if(HG.vc != null) {
+            HG.vc.removeSpectator(spectator);
+        }
     }
 
     void revealPlayer(Player hidden) {
