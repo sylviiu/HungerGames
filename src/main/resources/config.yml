@@ -63,6 +63,18 @@ settings:
     leave-item-type: RED_BED
     # Item that is shown to force start game
     force-start-item-type: NETHER_STAR
+event-hosted:
+    # When enabled, players without the "hg.startgames" permission will not be able to
+    # join games, and will instead follow whoever has the permission. This is pretty
+    # much a hijacked party system lol
+    enabled: true
+    # Commands to run when a new match is started
+    start-commands:
+        - none
+    # Commands to run when a match has concluded
+    finish-commands:
+        - none
+
 team:
     # When enabled, players will see nametags of other players on their team
     # if 'hide-nametags' is disabled, this option is ignored and names will show regardless

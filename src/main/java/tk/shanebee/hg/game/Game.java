@@ -229,6 +229,12 @@ public class Game {
         // Call the GameStartEvent
         Bukkit.getPluginManager().callEvent(new GameStartEvent(this));
         gameArenaData.status = Status.COUNTDOWN;
+        if (Config.event_enabled && !Config.event_startCommands.isEmpty()) {
+            for (String cmd : Config.event_startCommands) {
+                if (!cmd.equalsIgnoreCase("none"))
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            }
+        }
         starting = new StartingTask(this);
         gameBlockData.updateLobbyBlock();
     }
@@ -342,9 +348,16 @@ public class Game {
             }
         }
         gameBlockData.clearChests();
-        String winner = Util.translateStop(Util.convertUUIDListToStringList(win));
+
+        if (Config.event_enabled && !Config.event_finishCommands.isEmpty()) {
+            for (String cmd : Config.event_finishCommands) {
+                if (!cmd.equalsIgnoreCase("none"))
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            }
+        }
 
         // Broadcast wins
+        String winner = Util.translateStop(Util.convertUUIDListToStringList(win));
         if (death) {
             String broadcast = lang.player_won.replace("<arena>", gameArenaData.name).replace("<winner>", winner);
             if (Config.broadcastWinMessages) {

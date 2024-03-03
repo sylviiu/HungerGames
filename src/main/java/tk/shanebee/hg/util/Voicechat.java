@@ -1,52 +1,58 @@
 package tk.shanebee.hg.util;
 
-import de.maxhenkel.voicechat.api.*;
+import de.maxhenkel.voicechat.api.VoicechatPlugin;
+import de.maxhenkel.voicechat.api.VoicechatApi;
+import de.maxhenkel.voicechat.api.VoicechatServerApi;
+import de.maxhenkel.voicechat.api.VoicechatConnection;
+import de.maxhenkel.voicechat.api.Group;
 import de.maxhenkel.voicechat.api.events.EventRegistration;
 import de.maxhenkel.voicechat.api.events.VoicechatServerStartedEvent;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
-import tk.shanebee.hg.util.Util;
-import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.*;
-import java.util.stream.Stream;
+import tk.shanebee.hg.HG;
 
 public class Voicechat implements VoicechatPlugin {
+    private VoicechatApi api;
+    @Nullable
+    private static VoicechatServerApi serverApi = null;
+
+    @Nullable
+    public Group group = null;
+
+
+    @Override
     public String getPluginId() {
-        return "tk.shanebee.hg";
+        return HG.PLUGIN_ID;
     }
 
-    private VoicechatApi api;
-    private static VoicechatServerApi serverApi;
-
-
+    @Override
     public void initialize(VoicechatApi api) {
         Util.log("Voicechat initialize called!");
         //this.api = api;
     }
 
-    @Nullable
-    public Group group = null;
-
+    @Override
     public void registerEvents(EventRegistration registration) {
+        Util.log("Registering voicechat events");
         registration.registerEvent(VoicechatServerStartedEvent.class, this::getSpectatorGroup);
     }
 
-    private Group getSpectatorGroup(VoicechatServerStartedEvent event) {
-        serverApi = event.getVoicechat();
+    private void getSpectatorGroup(VoicechatServerStartedEvent event) {
+        if(serverApi == null)
+            serverApi = event.getVoicechat();
 
-        group = serverApi.groupBuilder()
-                .setPersistent(true)
-                .setName("Spectators")
-                .setType(Group.Type.NORMAL)
-                .build();
+        if(group == null)
+            group = serverApi.groupBuilder()
+                    .setPersistent(false)
+                    .setName("Spectators")
+                    .setType(Group.Type.NORMAL)
+                    .build();
 
         Util.log("Created Spectators group!");
-
-        return group;
     }
 
     public void addSpectator(Player player) {
+        assert serverApi != null;
         VoicechatConnection connection = serverApi.getConnectionOf(player.getUniqueId());
         if(connection != null && group != null) {
             Util.log("Adding player " + player.getName() + " to group " + group.getName());
@@ -57,6 +63,7 @@ public class Voicechat implements VoicechatPlugin {
     }
 
     public void removeSpectator(Player player) {
+        assert serverApi != null;
         VoicechatConnection connection = serverApi.getConnectionOf(player.getUniqueId());
         if(connection != null && connection.getGroup() != null) {
             Util.log("Removing player " + player.getName() + " from group " + connection.getGroup().getName());

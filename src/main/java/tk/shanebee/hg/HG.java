@@ -6,7 +6,6 @@ import io.papermc.lib.PaperLib;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
-import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
@@ -28,6 +27,7 @@ import java.util.*;
  * <b>Main class for HungerGames</b>
  */
 public class HG extends JavaPlugin {
+	public static final String PLUGIN_ID = "tk.shanebee.hg";
 
 	//Maps
 	private Map<String, BaseCmd> cmds;
@@ -58,7 +58,7 @@ public class HG extends JavaPlugin {
 	private Leaderboard leaderboard;
 	private MobExecutor mmMobManager;
 
-	private static Party party = new ServerParty();
+	private static Party party = new NoParty();
 
 	//Mobs
 	private MobConfig mobConfig;
@@ -77,8 +77,8 @@ public class HG extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
-		Metrics metrics1 = new org.bstats.bukkit.Metrics(this, 15119);
-		metrics1.addCustomChart(new SimplePie("partyplugin", () -> party.getClass().getName().replaceAll("tk.shanebee.hg.util.","")));
+		//Metrics metrics1 = new org.bstats.bukkit.Metrics(this, 15119);
+		//metrics1.addCustomChart(new SimplePie("partyplugin", () -> party.getClass().getName().replaceAll("tk.shanebee.hg.util.","")));
         loadPlugin(true);
     }
     public void loadPlugin(boolean load) {
@@ -119,28 +119,6 @@ public class HG extends JavaPlugin {
 			Bukkit.getLogger().info("Your Java Version is " + System.getProperty("java.version") + " This plugin is compatible with your version");
 		}
 		PaperLib.suggestPaper(this);
-
-		//VoiceChat API
-		if (Bukkit.getPluginManager().isPluginEnabled("voicechat")) {
-			Util.log("&7voicechat found, attempting to hook into API...");
-			System.out.println(BukkitVoicechatService.class);
-			BukkitVoicechatService service = Bukkit.getServicesManager().load(BukkitVoicechatService.class);
-			if (service != null) {
-				Util.log("&7voicechat hook registering with BukkitVoicechatService");
-				try {
-					vc = new Voicechat();
-					service.registerPlugin(vc);
-					Util.log("&7voicechat has been &aenabled");
-				} catch(Exception e) {
-					vc = null;
-					Util.warning("Failed starting voicechat, removing it. " + e);
-				}
-			} else {
-				Util.log("&7voicechat: BukkitVoicechatService is null, cannot register; voicechat has been &cdisabled");
-			}
-		} else {
-			Util.log("&7voicechat not found, API hooks have been &cdisabled");
-		}
 
 		//NMS Nbt
 		if (Bukkit.getPluginManager().isPluginEnabled("NBTAPI")) {
@@ -187,7 +165,10 @@ public class HG extends JavaPlugin {
 		}
 
 		//Party support
-		if (Config.allowParty)
+		if (Config.event_enabled) {
+			getLogger().info("Hosted event mode is enabled! Overriding party support.");
+			party = new ServerParty();
+		} else if (Config.allowParty) {
 			if (getServer().getPluginManager().isPluginEnabled("Spigot-Party-API-PAF")){
 				getLogger().info("Hook into Spigot Party API for Party and Friends Extended (by Simonsator) support!");
 				party = new PAFBungee();
@@ -198,6 +179,29 @@ public class HG extends JavaPlugin {
 				getLogger().info("Hook into Parties (by AlessioDP) support!");
 				party = new Parties();
 			}
+		}
+
+		//VoiceChat API
+		if (Bukkit.getPluginManager().isPluginEnabled("voicechat")) {
+			Util.log("&7voicechat found, attempting to hook into API...");
+			Util.log("Known services: " + getServer().getServicesManager().getKnownServices());
+			BukkitVoicechatService service = Bukkit.getServer().getServicesManager().load(de.maxhenkel.voicechat.api.BukkitVoicechatService.class);
+			if (service != null) {
+				Util.log("&7voicechat hook registering with BukkitVoicechatService");
+				try {
+					vc = new Voicechat();
+					service.registerPlugin(vc);
+					Util.log("&7voicechat has been &aenabled");
+				} catch(Exception e) {
+					Util.warning("Failed starting voicechat, removing it. " + e);
+					vc = null;
+				}
+			} else {
+				Util.log("&7voicechat: BukkitVoicechatService is null, cannot register; voicechat has been &cdisabled");
+			}
+		} else {
+			Util.log("&7voicechat not found, API hooks have been &cdisabled");
+		}
 
 		getCommand("hg").setExecutor(new CommandListener(this));
 		if (load) {

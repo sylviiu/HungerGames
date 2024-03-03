@@ -43,6 +43,11 @@ public class Config {
     public static String leaveitemtype;
     public static String forcestartitem;
 
+    //Hosted event info
+    public static boolean event_enabled;
+    public static List<String> event_startCommands;
+    public static List<String> event_finishCommands;
+
     //Team info
     public static boolean team_showTeamNames;
     public static int team_maxTeamSize;
@@ -135,6 +140,11 @@ public class Config {
         enableforcestartitem = config.getBoolean("settings.enable-force-start-item");
         leaveitemtype = config.getString("settings.leave-item-type");
         forcestartitem = config.getString("settings.force-start-item-type");
+
+        // Event
+        event_enabled = config.getBoolean("event-hosted.enabled");
+        event_startCommands = config.getStringList("event-hosted.start-commands");
+        event_finishCommands = config.getStringList("event-hosted.finish-commands");
 
         // Team
         team_maxTeamSize = config.getInt("team.max-team-size");
